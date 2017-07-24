@@ -22,7 +22,7 @@
 # Constants: these should not be changed
 
 NAME="Nextcloud sync cron"
-VERSION=1.0.0
+VERSION=1.1.0
 
 #----------------------------------------------------------------
 
@@ -152,8 +152,19 @@ fi
 # Load configuration
 
 function getconfig () {
-    PARAM="$1"
-    FILE="$2"
+    # Usage: getconfig [--optional] param_name config_file
+    if [ $# -eq 3 -a "$1" = '--optional' ]; then
+	OPTIONAL=yes
+	PARAM="$2"
+	FILE="$3"
+    elif [ $# -eq 2 ]; then
+	OPTIONAL=
+	PARAM="$1"
+	FILE="$2"
+    else
+	echo "$PROG: internal error: invoking getconfig" >&2
+	exit $STATUS_CONFIG_ERROR
+    fi
     VALUE=
     FOUND=
     IFS=": "
@@ -167,13 +178,16 @@ function getconfig () {
 	    FOUND=yes
 	fi
     done < "$FILE"
-    if [ -z "$FOUND" ]; then
-	echo "$PROG: config: missing value for \"$PARAM\": $FILE" >&2
-	exit $STATUS_CONFIG_ERROR
-    fi
-    if [ -z "$VALUE" ]; then
-	echo "$PROG: config: \"$PARAM\" cannot be blank: $FILE" >&2
-	exit $STATUS_CONFIG_ERROR
+    if [ -z "$OPTIONAL" ]; then
+	# Parameter was mandatory
+	if [ -z "$FOUND" ]; then
+	    echo "$PROG: config: missing value for \"$PARAM\": $FILE" >&2
+	    exit $STATUS_CONFIG_ERROR
+	fi
+	if [ -z "$VALUE" ]; then
+	    echo "$PROG: config: \"$PARAM\" cannot be blank: $FILE" >&2
+	    exit $STATUS_CONFIG_ERROR
+	fi
     fi
     echo "$VALUE"
 }
@@ -191,10 +205,27 @@ if [ ! -r "$CONF_FILE" ]; then
     exit $STATUS_ERROR
 fi
 
-USERNAME=`getconfig username "$CONF_FILE"`
-PASSWORD=`getconfig password "$CONF_FILE"`
+USERNAME=`getconfig --optional username "$CONF_FILE"`
+PASSWORD=`getconfig --optional password "$CONF_FILE"`
 LOCAL_DIR=`getconfig local "$CONF_FILE"`
 REMOTE_URI=`getconfig remote "$CONF_FILE"`
+
+if [ -n "$USERNAME" -a -z "$PASSWORD" ]; then
+    echo "$PROG: error: config file has username without password" >&2
+    exit $STATUS_CONFIG_ERROR
+elif [ -z "$USERNAME" -a -n "$PASSWORD" ]; then
+    echo "$PROG: error: config file has password without username" >&2
+    exit $STATUS_CONFIG_ERROR
+elif [ -z "$USERNAME" -a -z "$PASSWORD" ]; then
+    if [ ! -e "$HOME/.netrc" ]; then
+	echo "$PROG: error: ~/.netrc file missing" >&2
+	exit $STATUS_CONFIG_ERROR
+    fi
+    if [ ! -r "$HOME/.netrc" ]; then
+	echo "$PROG: error: cannot read ~/.netrc file" >&2
+	exit $STATUS_CONFIG_ERROR
+    fi
+fi
 
 #----------------------------------------------------------------
 # Setup internal file names
@@ -366,6 +397,7 @@ if [ -f "$PID_FILE" ]; then
 	fi
     else
 	# PID file contained unexpected data
+	TS=`date '+%F %T'`
 	echo "$TS: bad PID file: $PID_FILE" >> "$LOG_FILE"
 	exit $STATUS_ERROR
     fi
@@ -398,7 +430,6 @@ cat >"$OUT_FILE" <<EOF
 # config: $CONF_FILE
 # runtime: $TS
 
-username: $USERNAME
 remote: $REMOTE_URI
 local: $LOCAL_DIR
 
@@ -408,9 +439,34 @@ EOF
 # hidden directory used for logging. If hidden files are needed,
 # change where the log directory is.
 
-if "$NEXTCLOUDCMD" --non-interactive \
-    --user "$USERNAME" --password "$PASSWORD" "$LOCAL_DIR" "$REMOTE_URI" \
-    >>"$OUT_FILE" 2>&1; then
+NCC_SUCCEEDED=
+if [ -n "$USERNAME" ]; then
+    # Credentials on command line
+    if "$NEXTCLOUDCMD" --non-interactive \
+	--user "$USERNAME" --password "$PASSWORD" \
+	"$LOCAL_DIR" "$REMOTE_URI" >>"$OUT_FILE" 2>&1; then
+	NCC_SUCCEEDED=yes
+    fi
+else
+    # Credentials from ~/.netrc
+    if "$NEXTCLOUDCMD" --non-interactive -n \
+	"$LOCAL_DIR" "$REMOTE_URI" >>"$OUT_FILE" 2>&1; then
+	NCC_SUCCEEDED=yes
+    fi
+fi
+
+TE=`date '+%F %T'`
+FINISH_SECS=`date +%s`
+
+DELAY=$(($FINISH_SECS - $START_SECS))
+
+cat >>"$OUT_FILE" <<EOF
+
+# time taken: $DELAY seconds
+# finished: $TE
+EOF
+
+if [ -n "$NCC_SUCCEEDED" ]; then
     # Succeeded
 
     # Reset failures
@@ -419,8 +475,6 @@ if "$NEXTCLOUDCMD" --non-interactive \
     fi
 
     # Log
-    FINISH_SECS=`date +%s`
-    DELAY=$(($FINISH_SECS - $START_SECS))
     echo "$TS: OK (${DELAY}s)" >> "$LOG_FILE"
 
     EXIT_STATUS=$STATUS_OK

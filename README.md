@@ -53,7 +53,30 @@ A configuration file is a text file that must contain:
 - `local` directory on the local machine where the files will be stored.
 - `remote` URL to the Nextcloud service.
 
+If the username and password are both omitted, the program will
+attempt to use a `.netrc` file in the user's home directory.
+
 For example:
+
+```
+# Config file for Nextcloud sync cron
+
+local: /home/fbar/mydata
+remote: https://nextcloud.example.com
+```
+
+And the `.netrc` file contains:
+
+```
+default
+login foobar
+password p@ssw0rd
+```
+
+Alternatively, the username and password can be placed in the
+configuration file. But this is not recommended for security reasons:
+the password will be passed to _nextcloudcmd_ via command line
+parameters.
 
 ```
 # Config file for Nextcloud sync cron
@@ -203,9 +226,9 @@ file.
 
 ## Security issues
 
-The password is passed to the Nextcloud command line client via
-command line arguments. This is a limitation of the Nextcloud command
-line client.
+If the `.netrc` file is not used, the password is passed to the
+Nextcloud command line client via command line arguments. This is a
+limitation of the Nextcloud command line client.
 
 ## Some errors will produce output
 
