@@ -1,0 +1,5 @@
+# Changelog
+
+## 1.1.0
+
+- Added support for ~/.netrc file for login credentials.

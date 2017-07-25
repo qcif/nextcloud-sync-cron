@@ -57,7 +57,7 @@ trap "echo $PROG: aborted; exit $STATUS_UNEXPECTED_ERROR" ERR
 IFS=$'\n\t'
 
 #----------------------------------------------------------------
-# Usage
+# Process command line arguments
 
 LOG_DIR=
 VERBOSE=
@@ -95,7 +95,8 @@ fi
 
 if [ -n "$HAS_GNU_ENHANCED_GETOPT" ]; then
   # Use GNU enhanced getopt
-  if ! getopt --name "$PROG" --long $LONG_OPTS --options $SHORT_OPTS -- "$@" >/dev/null; then
+  if ! getopt --name "$PROG" --long $LONG_OPTS --options $SHORT_OPTS -- "$@" \
+    >/dev/null; then
     echo "$PROG: usage error (use -h or --help for help)" >&2
     exit 2
   fi
@@ -210,23 +211,6 @@ PASSWORD=`getconfig --optional password "$CONF_FILE"`
 LOCAL_DIR=`getconfig local "$CONF_FILE"`
 REMOTE_URI=`getconfig remote "$CONF_FILE"`
 
-if [ -n "$USERNAME" -a -z "$PASSWORD" ]; then
-    echo "$PROG: error: config file has username without password" >&2
-    exit $STATUS_CONFIG_ERROR
-elif [ -z "$USERNAME" -a -n "$PASSWORD" ]; then
-    echo "$PROG: error: config file has password without username" >&2
-    exit $STATUS_CONFIG_ERROR
-elif [ -z "$USERNAME" -a -z "$PASSWORD" ]; then
-    if [ ! -e "$HOME/.netrc" ]; then
-	echo "$PROG: error: ~/.netrc file missing" >&2
-	exit $STATUS_CONFIG_ERROR
-    fi
-    if [ ! -r "$HOME/.netrc" ]; then
-	echo "$PROG: error: cannot read ~/.netrc file" >&2
-	exit $STATUS_CONFIG_ERROR
-    fi
-fi
-
 #----------------------------------------------------------------
 # Setup internal file names
 
@@ -266,7 +250,7 @@ fi
 
 if [ ! -d "$LOG_DIR" ]; then
     if ! mkdir "$LOG_DIR" 2>&1; then
-	echo "$PROG: error: cannot create to log directory: $LOG_DIR" >&2
+	echo "$PROG: error: cannot create log directory: $LOG_DIR" >&2
 	exit $STATUS_ERROR
     fi
 fi
@@ -293,6 +277,33 @@ fi
 # NOTE: After this point this script does not produce any output to
 # stdout or stderr, unless in verbose mode. This is so cron won't
 # email the user anything.  See the log file for any error messages.
+
+#----------------------------------------------------------------
+# Check credentials (might) exist
+# Might because it doesn't look inside any ~/.netrc file for correctness.
+
+ERROR=
+if [ -n "$USERNAME" -a -z "$PASSWORD" ]; then
+    ERROR="config file has username without password"
+elif [ -z "$USERNAME" -a -n "$PASSWORD" ]; then
+    ERROR="config file has password without username"
+elif [ -z "$USERNAME" -a -z "$PASSWORD" ]; then
+    if [ ! -r "$HOME/.netrc" ]; then
+	ERROR="cannot read file: $HOME/.netrc"
+    fi
+    if [ ! -e "$HOME/.netrc" ]; then
+	ERROR="file missing: $HOME/.netrc"
+    fi
+fi
+
+if [ -n "$ERROR" ]; then
+    TS=`date '+%F %T'`
+    echo "$TS: fail: $ERROR" >> "$LOG_FILE"
+    if [ -n "$VERBOSE" ]; then
+	echo "$PROG: error: $ERROR" >&2
+    fi
+    exit $STATUS_CONFIG_ERROR
+fi
 
 #----------------------------------------------------------------
 # Check for previous failures
@@ -340,17 +351,31 @@ if [ -e "$BAD_FILE" ]; then
 	DELAY=$MAX_DELAY
     fi
 
-
     # Abort if reason was configuration error and it has not been fixed
 
     if echo "$PREV_REASON" | grep "^$REASON_CONFIG" >/dev/null; then
-	# Configuration file error
+	# Configuration error
 
-	if [ "$BAD_FILE" -nt "$CONF_FILE" ]; then
-	    # Config file has not been modified since previous run
+	if [ "$CONF_FILE" -nt "$BAD_FILE" ]; then
+	    # Config file has been modified since last run
+	    :
+	elif [ \( -z "$USERNAME" \) -a \
+	       \( "$HOME/.netrc" -nt "$BAD_FILE" \) ];then
+	    # Using ~/.netrc and it has been modified since last run
+	    :
+	else
+	    # Problem probably has not been fixed
+	    if [ -n "$USERNAME" ]; then
+		ERROR="fix \"$CONF_FILE\" or delete \"$BAD_FILE\""
+	    else
+		ERROR="fix \"$CONF_FILE\" and/or \"$HOME/.netrc\", or delete \"$BAD_FILE\""
+	    fi
+	    TS=`date '+%F %T'`
+	    echo "$TS: fail: $ERROR" >> "$LOG_FILE"
+
 	    if [ -n "$VERBOSE" ]; then
 		echo "$PROG: $PREV_REASON" >&2
-		echo "$PROG: modify $CONF_FILE before running again" >&2
+		echo "$PROG: $ERROR before running again" >&2
 	    fi
 	    exit $STATUS_CONFIG_FILE_NOT_FIXED
 	fi
@@ -375,7 +400,6 @@ else
     NUM_FAILURES=0
 fi
 
-
 #----------------------------------------------------------------
 # Prevent multiple instances of this script from running
 
@@ -398,7 +422,7 @@ if [ -f "$PID_FILE" ]; then
     else
 	# PID file contained unexpected data
 	TS=`date '+%F %T'`
-	echo "$TS: bad PID file: $PID_FILE" >> "$LOG_FILE"
+	echo "$TS: fail: bad PID file: $PID_FILE" >> "$LOG_FILE"
 	exit $STATUS_ERROR
     fi
 fi
@@ -439,18 +463,23 @@ EOF
 # hidden directory used for logging. If hidden files are needed,
 # change where the log directory is.
 
+# Stdin is taken from /dev/null so when it attempts to use ~/.netrc
+# and suitable credentials aren't in it, it is not going to hang
+# waiting for the user to enter the password. The --non-interactive
+# option is not used because it causes nextcloudcmd v2.3.2 to return a
+# misleading zero exit status if it fails to authenticate.
+
 NCC_SUCCEEDED=
 if [ -n "$USERNAME" ]; then
     # Credentials on command line
-    if "$NEXTCLOUDCMD" --non-interactive \
-	--user "$USERNAME" --password "$PASSWORD" \
-	"$LOCAL_DIR" "$REMOTE_URI" >>"$OUT_FILE" 2>&1; then
+    if "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
+	"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
 	NCC_SUCCEEDED=yes
     fi
 else
     # Credentials from ~/.netrc
-    if "$NEXTCLOUDCMD" --non-interactive -n \
-	"$LOCAL_DIR" "$REMOTE_URI" >>"$OUT_FILE" 2>&1; then
+    if "$NEXTCLOUDCMD" -n \
+	"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
 	NCC_SUCCEEDED=yes
     fi
 fi
@@ -475,7 +504,7 @@ if [ -n "$NCC_SUCCEEDED" ]; then
     fi
 
     # Log
-    echo "$TS: OK (${DELAY}s)" >> "$LOG_FILE"
+    echo "$TS: OK (${DELAY} s)" >> "$LOG_FILE"
 
     EXIT_STATUS=$STATUS_OK
 
