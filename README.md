@@ -46,15 +46,12 @@ Features are:
 
 ## Configuration file
 
+### Recommended method using .netrc
+
 A configuration file is a text file that must contain:
 
-- `username` of an account on the Nextcloud service.
-- `password` for the account.
 - `local` directory on the local machine where the files will be stored.
 - `remote` URL to the Nextcloud service.
-
-If the username and password are both omitted, the program will
-attempt to use a `.netrc` file in the user's home directory.
 
 For example:
 
@@ -65,7 +62,7 @@ local: /home/fbar/mydata
 remote: https://nextcloud.example.com
 ```
 
-And the `.netrc` file contains:
+And the `~/.netrc` file contains the user credentials:
 
 ```
 default
@@ -73,18 +70,25 @@ login foobar
 password p@ssw0rd
 ```
 
-Alternatively, the username and password can be placed in the
-configuration file. But this is not recommended for security reasons:
-the password will be passed to _nextcloudcmd_ via command line
-parameters.
+Note: the _.netrc_ file must reside in the home directory. It is
+not possible for a different file to be used.
+
+### Alternative not using .netrc
+
+If the username and password is included in the configuration file,
+they will be used instead of the _.netrc_ file.
+
+This method is not recommended, because the password will be passed to
+_nextcloudcmd_ via command line parameters which exposes it to others
+on the system.
 
 ```
 # Config file for Nextcloud sync cron
 
-username: foobar
-password: p@ssw0rd
 local: /home/fbar/mydata
 remote: https://nextcloud.example.com
+username: foobar
+password: p@ssw0rd
 ```
 
 ## Logging and errors
@@ -252,3 +256,12 @@ once, before leaving it unattended. However, these errors can also
 arise if incorrect changes are made to the configuration file or local
 system.
 
+## Performance
+
+Every time the script is run, it needs to scan the entire local
+directory for changes.
+
+The _nextcloudcmd_ program is not designed to be a sync client. There
+is a long-standing
+[issue](https://github.com/owncloud/client/issues/2002) for a proper
+non-GUI sync client to be built.
