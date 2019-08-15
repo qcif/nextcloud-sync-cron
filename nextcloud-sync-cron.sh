@@ -208,6 +208,7 @@ fi
 
 USERNAME=`getconfig --optional username "$CONF_FILE"`
 PASSWORD=`getconfig --optional password "$CONF_FILE"`
+NOSYNC_FILE=`getconfig --optional nosync "$CONF_FILE"`
 LOCAL_DIR=`getconfig local "$CONF_FILE"`
 REMOTE_URI=`getconfig remote "$CONF_FILE"`
 
@@ -469,19 +470,40 @@ EOF
 # option is not used because it causes nextcloudcmd v2.3.2 to return a
 # misleading zero exit status if it fails to authenticate.
 
-NCC_SUCCEEDED=
-if [ -n "$USERNAME" ]; then
-    # Credentials on command line
-    if "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
-	"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
-	NCC_SUCCEEDED=yes
-    fi
+if [ -r $NOSYNC_FILE ]; then
+	# with nosync file
+	NCC_SUCCEEDED=
+	if [ -n "$USERNAME" ]; then
+	    # Credentials on command line
+	    if "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
+	    	--unsyncedfolders "$NOSYNC_FILE" \
+		"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
+		NCC_SUCCEEDED=yes
+	    fi
+	else
+	    # Credentials from ~/.netrc
+	    if "$NEXTCLOUDCMD" -n \
+		"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
+		NCC_SUCCEEDED=yes
+	    fi
+	fi
 else
-    # Credentials from ~/.netrc
-    if "$NEXTCLOUDCMD" -n \
-	"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
-	NCC_SUCCEEDED=yes
-    fi
+	# without nosync file
+	NCC_SUCCEEDED=
+	if [ -n "$USERNAME" ]; then
+	    # Credentials on command line
+	    if "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
+	    	--unsyncedfolders "$NOSYNC_FILE" \
+		"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
+		NCC_SUCCEEDED=yes
+	    fi
+	else
+	    # Credentials from ~/.netrc
+	    if "$NEXTCLOUDCMD" -n \
+		"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
+		NCC_SUCCEEDED=yes
+	    fi
+	fi
 fi
 
 TE=`date '+%F %T'`
