@@ -53,6 +53,10 @@ A configuration file is a text file that must contain:
 - `local` directory on the local machine where the files will be stored.
 - `remote` URL to the Nextcloud service.
 
+Optionally it can also contain:
+
+- `nosync` file with names of folders on remote machine that shall not be synced.
+
 For example:
 
 ```
@@ -60,6 +64,7 @@ For example:
 
 local: /home/fbar/mydata
 remote: https://nextcloud.example.com
+nosync: /home/fbar/nosync.lst
 ```
 
 And the `~/.netrc` file contains the user credentials:
@@ -87,6 +92,7 @@ on the system.
 
 local: /home/fbar/mydata
 remote: https://nextcloud.example.com
+nosync: /home/fbar/nosync.lst
 username: foobar
 password: p@ssw0rd
 ```
