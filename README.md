@@ -8,8 +8,9 @@ Script to run the Linux/Unix Nextcloud command line client in a cron job.
     
 # Description
 
-For running the Nextcloud command line client program, `nextcloudcmd`,
-in a _cron_ job.
+For running the [Nextcloud command line
+client](https://docs.nextcloud.com/desktop/2.5/advancedusage.html#nextcloud-command-line-client)
+program, `nextcloudcmd`, in a _cron_ job.
 
 The standard Nextcloud command line client performs one sync run and
 exits. Therefore, to keep a local directory synchronised with a
@@ -53,10 +54,6 @@ A configuration file is a text file that must contain:
 - `local` directory on the local machine where the files will be stored.
 - `remote` URL to the Nextcloud service.
 
-Optionally it can also contain:
-
-- `nosync` file with names of folders on remote machine that shall not be synced.
-
 For example:
 
 ```
@@ -64,7 +61,6 @@ For example:
 
 local: /home/fbar/mydata
 remote: https://nextcloud.example.com
-nosync: /home/fbar/nosync.lst
 ```
 
 And the `~/.netrc` file contains the user credentials:
@@ -92,9 +88,24 @@ on the system.
 
 local: /home/fbar/mydata
 remote: https://nextcloud.example.com
-nosync: /home/fbar/nosync.lst
 username: foobar
 password: p@ssw0rd
+```
+
+### Unsynced folders
+
+Optionally the configuration file can also contain:
+
+- `unsyncedfolders` file with names of folders on remote machine that shall not be synced.
+
+The file is passed to _nextcloudcmd_ as the `--unsyncedfolders` option.
+
+```
+# Config file for Nextcloud sync cron
+
+local: /home/fbar/mydata
+remote: https://nextcloud.example.com
+unsyncedfolders: /home/fbar/nosync.lst
 ```
 
 ## Logging and errors
@@ -127,9 +138,9 @@ The log directory is created if it does not already exist.
 
 # Example
 
-Install the [Nextcloud command line
-client](https://nextcloud.com/install/#install-clients).
-For example, on CentOS 7, this can be done by running:
+[Install](https://nextcloud.com/install/#install-clients) the
+Nextcloud command line client.  For example, on CentOS 7, this can be
+done by running:
 
     sudo yum install epel-release
     sudo yum install nextcloud-client

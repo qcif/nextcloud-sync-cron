@@ -15,14 +15,14 @@
 # See the README file at <https://github.com/qcif/nextcloud-sync-cron>
 # for more details.
 #
-# Copyright 2017, QCIF Pty Ltd.
+# Copyright 2017, 2019, QCIF Pty Ltd.
 #----------------------------------------------------------------
 
 #----------------------------------------------------------------
 # Constants: these should not be changed
 
 NAME="Nextcloud sync cron"
-VERSION=1.1.0
+VERSION=1.2.0
 
 #----------------------------------------------------------------
 
@@ -208,7 +208,7 @@ fi
 
 USERNAME=`getconfig --optional username "$CONF_FILE"`
 PASSWORD=`getconfig --optional password "$CONF_FILE"`
-NOSYNC_FILE=`getconfig --optional nosync "$CONF_FILE"`
+UNSYNCEDFOLDERS=`getconfig --optional unsyncedfolders "$CONF_FILE"`
 LOCAL_DIR=`getconfig local "$CONF_FILE"`
 REMOTE_URI=`getconfig remote "$CONF_FILE"`
 
@@ -295,6 +295,12 @@ elif [ -z "$USERNAME" -a -z "$PASSWORD" ]; then
     if [ ! -e "$HOME/.netrc" ]; then
 	ERROR="file missing: $HOME/.netrc"
     fi
+fi
+
+if [ -n "$UNSYNCEDFOLDERS" ]; then
+  if [ ! -r "$UNSYNCEDFOLDERS" ]; then
+    ERROR="cannot read unsyncedfolders file: $UNSYNCEDFOLDERS"
+  fi
 fi
 
 if [ -n "$ERROR" ]; then
@@ -470,40 +476,28 @@ EOF
 # option is not used because it causes nextcloudcmd v2.3.2 to return a
 # misleading zero exit status if it fails to authenticate.
 
-if [ -r $NOSYNC_FILE ]; then
-	# with nosync file
-	NCC_SUCCEEDED=
-	if [ -n "$USERNAME" ]; then
-	    # Credentials on command line
-	    if "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
-	    	--unsyncedfolders "$NOSYNC_FILE" \
-		"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
-		NCC_SUCCEEDED=yes
-	    fi
-	else
-	    # Credentials from ~/.netrc
-	    if "$NEXTCLOUDCMD" -n \
-		"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
-		NCC_SUCCEEDED=yes
-	    fi
-	fi
+UNSYNCEDFOLDERS_OPTION=
+if [ -n $UNSYNCEDFOLDERS ]; then
+  UNSYNCEDFOLDERS_OPTION="--unsyncfolders \"$UNSYNCEDFOLDERS\""
+fi
+
+# Run command
+
+NCC_SUCCEEDED=
+if [ -n "$USERNAME" ]; then
+  # Credentials on command line
+  if "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
+                     $UNSYNCEDFOLDERS_OPTION \
+		     "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
+    NCC_SUCCEEDED=yes
+  fi
 else
-	# without nosync file
-	NCC_SUCCEEDED=
-	if [ -n "$USERNAME" ]; then
-	    # Credentials on command line
-	    if "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
-	    	--unsyncedfolders "$NOSYNC_FILE" \
-		"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
-		NCC_SUCCEEDED=yes
-	    fi
-	else
-	    # Credentials from ~/.netrc
-	    if "$NEXTCLOUDCMD" -n \
-		"$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
-		NCC_SUCCEEDED=yes
-	    fi
-	fi
+  # Credentials from ~/.netrc
+  if "$NEXTCLOUDCMD" -n \
+		     $UNSYNCEDFOLDERS_OPTION \
+		     "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
+    NCC_SUCCEEDED=yes
+  fi
 fi
 
 TE=`date '+%F %T'`
