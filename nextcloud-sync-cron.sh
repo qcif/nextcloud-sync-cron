@@ -22,7 +22,7 @@
 # Constants: these should not be changed
 
 NAME="Nextcloud sync cron"
-VERSION=1.2.0
+VERSION=1.2.1
 
 #----------------------------------------------------------------
 
@@ -477,7 +477,7 @@ EOF
 # misleading zero exit status if it fails to authenticate.
 
 UNSYNCEDFOLDERS_OPTION=
-if [ -n $UNSYNCEDFOLDERS ]; then
+if [ -n "$UNSYNCEDFOLDERS" ]; then
   UNSYNCEDFOLDERS_OPTION="--unsyncfolders \"$UNSYNCEDFOLDERS\""
 fi
 

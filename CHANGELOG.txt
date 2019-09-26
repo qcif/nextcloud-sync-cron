@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+
+- Fixed syntax bug if UNSYNCEDFOLDERS is not set.
+
 ## 1.2.0
 
 - Added configuration to set the --unsyncedfolders option.
