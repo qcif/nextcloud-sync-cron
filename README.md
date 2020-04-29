@@ -276,14 +276,6 @@ If the `.netrc` file is not used, the password is passed to the
 Nextcloud command line client via command line arguments. This is a
 limitation of the Nextcloud command line client.
 
-## Some values cannot contain spaces
-
-The configuration file does not support values with spaces in them for
-`unsyncedfolders`, `davpath` and `exclude`.
-
-The only configuration items that can contain spaces are the `username`,
-`password`, `local` and `remote` directories.
-
 ## Some errors will produce output
 
 Certain types of errors will cause the script to print out an error

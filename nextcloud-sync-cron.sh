@@ -15,14 +15,14 @@
 # See the README file at <https://github.com/qcif/nextcloud-sync-cron>
 # for more details.
 #
-# Copyright 2017, 2019, QCIF Pty Ltd.
+# Copyright 2017, 2019, 2020, QCIF Pty Ltd.
 #----------------------------------------------------------------
 
 #----------------------------------------------------------------
 # Constants: these should not be changed
 
 NAME="Nextcloud sync cron"
-VERSION=1.2.1
+VERSION=1.3.0
 
 #----------------------------------------------------------------
 
@@ -309,7 +309,7 @@ fi
 
 if [ -n "$EXCLUDE" ]; then
   if [ ! -r "$EXCLUDE" ]; then
-    ERROR="cannot read excloudelist fiie: $EXCLUDE"
+    ERROR="cannot read excludelist file: $EXCLUDE"
   fi
 fi
 
@@ -461,7 +461,7 @@ fi
 #----------------------------------------------------------------
 # Run sync command, saving any error messages if this is a last chance run
 
-# Write the settings used into the start of the file
+# Write the settings used into the start of the file to aid debugging
 
 TS=`date '+%F %T'`
 START_SECS=`date +%s`
@@ -513,12 +513,12 @@ fi
 
 DAVPATH_OPTION=
 if [ -n "$DAVPATH" ]; then
-  DAVPATH_OPTION="--davpath $DAVPATH"
+  DAVPATH_OPTION="--davpath \"$DAVPATH\""
 fi
 
 EXCLUDE_OPTION=
 if [ -n "$EXCLUDE" ]; then
-  EXCLUDE_OPTION="--exclude $EXCLUDE"
+  EXCLUDE_OPTION="--exclude \"$EXCLUDE\""
 fi
 
 # Run command
@@ -526,20 +526,20 @@ fi
 NCC_SUCCEEDED=
 if [ -n "$USERNAME" ]; then
   # Credentials on command line
-  if "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
-                     $UNSYNCEDFOLDERS_OPTION \
-		     $DAVPATH_OPTION \
-		     $EXCLUDE_OPTION \
-		     "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
+  if eval "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
+          $UNSYNCEDFOLDERS_OPTION \
+	  $DAVPATH_OPTION \
+	  $EXCLUDE_OPTION \
+	  "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
     NCC_SUCCEEDED=yes
   fi
 else
   # Credentials from ~/.netrc (the "-n" means to use netrc for login)
-  if "$NEXTCLOUDCMD" -n \
-		     $UNSYNCEDFOLDERS_OPTION \
-		     $DAVPATH_OPTION \
-		     $EXCLUDE_OPTION \
-		     "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
+  if eval "$NEXTCLOUDCMD" -n \
+	  $UNSYNCEDFOLDERS_OPTION \
+	  $DAVPATH_OPTION \
+	  $EXCLUDE_OPTION \
+	  "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
     NCC_SUCCEEDED=yes
   fi
 fi
