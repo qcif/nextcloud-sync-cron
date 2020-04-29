@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+
+- Added support for "davpath" and "exclude" in the config file.
+
 ## 1.2.1
 
 - Fixed syntax bug if UNSYNCEDFOLDERS is not set.

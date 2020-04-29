@@ -47,9 +47,24 @@ Features are:
 
 ## Configuration file
 
-### Recommended method using .netrc
+Mandatory entries:
 
-A configuration file is a text file that must contain:
+- `local` source directory
+- `remote` Nextcloud URL
+
+Optional entries:
+
+- `unsyncedfolders` the name of a file containing list of un-synced remote folders
+- `davpath` value to override the WebDAV Path
+- `exclude` the name of a file containing an exclude list
+- `username` 
+- `password`
+
+### Authentication configuration
+
+#### Recommended method using .netrc
+
+A configuration file is a text file that must contain these mandatory entries:
 
 - `local` directory on the local machine where the files will be stored.
 - `remote` URL to the Nextcloud service.
@@ -74,7 +89,7 @@ password p@ssw0rd
 Note: the _.netrc_ file must reside in the home directory. It is
 not possible for a different file to be used.
 
-### Alternative not using .netrc
+#### Alternative not using .netrc
 
 If the username and password is included in the configuration file,
 they will be used instead of the _.netrc_ file.
@@ -92,7 +107,9 @@ username: foobar
 password: p@ssw0rd
 ```
 
-### Unsynced folders
+### Optional configuration
+
+#### Unsynced folders
 
 Optionally the configuration file can also contain:
 
@@ -107,6 +124,14 @@ local: /home/fbar/mydata
 remote: https://nextcloud.example.com
 unsyncedfolders: /home/fbar/nosync.lst
 ```
+
+#### WebDAV Path
+
+- `davpath` value to override the WebDAV Path
+
+#### Exclude list
+
+- `exclude` the name of a file containing an exclude list
 
 ## Logging and errors
 
@@ -250,6 +275,14 @@ file.
 If the `.netrc` file is not used, the password is passed to the
 Nextcloud command line client via command line arguments. This is a
 limitation of the Nextcloud command line client.
+
+## Some values cannot contain spaces
+
+The configuration file does not support values with spaces in them for
+`unsyncedfolders`, `davpath` and `exclude`.
+
+The only configuration items that can contain spaces are the `username`,
+`password`, `local` and `remote` directories.
 
 ## Some errors will produce output
 

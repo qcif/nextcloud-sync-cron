@@ -208,7 +208,11 @@ fi
 
 USERNAME=`getconfig --optional username "$CONF_FILE"`
 PASSWORD=`getconfig --optional password "$CONF_FILE"`
+
 UNSYNCEDFOLDERS=`getconfig --optional unsyncedfolders "$CONF_FILE"`
+DAVPATH=`getconfig --optional davpath "$CONF_FILE"`
+EXCLUDE=`getconfig --optional exclude "$CONF_FILE"`
+
 LOCAL_DIR=`getconfig local "$CONF_FILE"`
 REMOTE_URI=`getconfig remote "$CONF_FILE"`
 
@@ -300,6 +304,12 @@ fi
 if [ -n "$UNSYNCEDFOLDERS" ]; then
   if [ ! -r "$UNSYNCEDFOLDERS" ]; then
     ERROR="cannot read unsyncedfolders file: $UNSYNCEDFOLDERS"
+  fi
+fi
+
+if [ -n "$EXCLUDE" ]; then
+  if [ ! -r "$EXCLUDE" ]; then
+    ERROR="cannot read excloudelist fiie: $EXCLUDE"
   fi
 fi
 
@@ -451,8 +461,25 @@ fi
 #----------------------------------------------------------------
 # Run sync command, saving any error messages if this is a last chance run
 
+# Write the settings used into the start of the file
+
 TS=`date '+%F %T'`
 START_SECS=`date +%s`
+
+UNSYNCEDFOLDERS_SETTING=
+if [ -n "$UNSYNCEDFOLDERS" ]; then
+  UNSYNCEDFOLDERS_SETTING="unsyncedfolders: $UNSYNCEDFOLDERS"
+fi
+
+DAVPATH_SETTING=
+if [ -n "$DAVPATH" ]; then
+  DAVPATH_SETTING="davpath: $DAVPATH"
+fi
+
+EXCLUDE_SETTING=
+if [ -n "$EXCLUDE" ]; then
+  EXCLUDE_SETTING="exclude: $EXCLUDE"
+fi
 
 cat >"$OUT_FILE" <<EOF
 # $NAME: nextcloudcmd output
@@ -464,6 +491,9 @@ cat >"$OUT_FILE" <<EOF
 remote: $REMOTE_URI
 local: $LOCAL_DIR
 
+$UNSYNCEDFOLDERS_SETTING
+$DAVPATH_SETTING
+$EXCLUDE_SETTING
 EOF
 
 # Warning: do not run nextcloudcmd with -h, since that will sync the
@@ -481,6 +511,16 @@ if [ -n "$UNSYNCEDFOLDERS" ]; then
   UNSYNCEDFOLDERS_OPTION="--unsyncfolders \"$UNSYNCEDFOLDERS\""
 fi
 
+DAVPATH_OPTION=
+if [ -n "$DAVPATH" ]; then
+  DAVPATH_OPTION="--davpath $DAVPATH"
+fi
+
+EXCLUDE_OPTION=
+if [ -n "$EXCLUDE" ]; then
+  EXCLUDE_OPTION="--exclude $EXCLUDE"
+fi
+
 # Run command
 
 NCC_SUCCEEDED=
@@ -488,13 +528,17 @@ if [ -n "$USERNAME" ]; then
   # Credentials on command line
   if "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
                      $UNSYNCEDFOLDERS_OPTION \
+		     $DAVPATH_OPTION \
+		     $EXCLUDE_OPTION \
 		     "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
     NCC_SUCCEEDED=yes
   fi
 else
-  # Credentials from ~/.netrc
+  # Credentials from ~/.netrc (the "-n" means to use netrc for login)
   if "$NEXTCLOUDCMD" -n \
 		     $UNSYNCEDFOLDERS_OPTION \
+		     $DAVPATH_OPTION \
+		     $EXCLUDE_OPTION \
 		     "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
     NCC_SUCCEEDED=yes
   fi
@@ -504,6 +548,8 @@ TE=`date '+%F %T'`
 FINISH_SECS=`date +%s`
 
 DELAY=$(($FINISH_SECS - $START_SECS))
+
+# Write statistics into the end of the file
 
 cat >>"$OUT_FILE" <<EOF
 
