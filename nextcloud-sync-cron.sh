@@ -22,7 +22,7 @@
 # Constants: these should not be changed
 
 NAME="Nextcloud sync cron"
-VERSION=1.3.0
+VERSION=1.4.0
 
 #----------------------------------------------------------------
 
@@ -206,12 +206,20 @@ if [ ! -r "$CONF_FILE" ]; then
     exit $STATUS_ERROR
 fi
 
+# Optional config options
+
 USERNAME=`getconfig --optional username "$CONF_FILE"`
 PASSWORD=`getconfig --optional password "$CONF_FILE"`
 
 UNSYNCEDFOLDERS=`getconfig --optional unsyncedfolders "$CONF_FILE"`
 DAVPATH=`getconfig --optional davpath "$CONF_FILE"`
+UPLIMIT=`getconfig --optional uplimit "$CONF_FILE"`
+DOWNLIMIT=`getconfig --optional downlimit "$CONF_FILE"`
 EXCLUDE=`getconfig --optional exclude "$CONF_FILE"`
+HTTPPROXY=`getconfig --optional httpproxy "$CONF_FILE"`
+TRUST=`getconfig --optional trust "$CONF_FILE"`
+
+# Mandatory config options
 
 LOCAL_DIR=`getconfig local "$CONF_FILE"`
 REMOTE_URI=`getconfig remote "$CONF_FILE"`
@@ -476,9 +484,29 @@ if [ -n "$DAVPATH" ]; then
   DAVPATH_SETTING="davpath: $DAVPATH"
 fi
 
+UPLIMIT_SETTING=
+if [ -n "$UPLIMIT" ]; then
+  UPLIMIT_SETTING="uplimit: $UPLIMIT"
+fi
+
+DOWNLIMIT_SETTING=
+if [ -n "$DOWNLIMIT" ]; then
+  DOWNLIMIT_SETTING="downlimit: $DOWNLIMIT"
+fi
+
 EXCLUDE_SETTING=
 if [ -n "$EXCLUDE" ]; then
   EXCLUDE_SETTING="exclude: $EXCLUDE"
+fi
+
+HTTPPROXY_SETTING=
+if [ -n "$HTTPPROXY" ]; then
+  HTTPPROXY_SETTING="httpproxy: $HTTPPROXY"
+fi
+
+TRUST_SETTING=
+if [ -n "$TRUST" -a "$TRUST" != 'false' ]; then
+  TRUST_SETTING="trust: true"
 fi
 
 cat >"$OUT_FILE" <<EOF
@@ -493,7 +521,11 @@ local: $LOCAL_DIR
 
 $UNSYNCEDFOLDERS_SETTING
 $DAVPATH_SETTING
+$UPLIMIT_SETTING
+$DOWNLIMIT_SETTING
 $EXCLUDE_SETTING
+$HTTPPROXY_SETTING
+$TRUST_SETTING
 EOF
 
 # Warning: do not run nextcloudcmd with -h, since that will sync the
@@ -516,9 +548,29 @@ if [ -n "$DAVPATH" ]; then
   DAVPATH_OPTION="--davpath \"$DAVPATH\""
 fi
 
+UPLIMIT_OPTION=
+if [ -n "$UPLIMIT" ]; then
+  UPLIMIT_OPTION="--uplimit $UPLIMIT"
+fi
+
+DOWNLIMIT_OPTION=
+if [ -n "$DOWNLIMIT" ]; then
+  DOWNLIMIT_OPTION="--downlimit $DOWNLIMIT"
+fi
+
 EXCLUDE_OPTION=
 if [ -n "$EXCLUDE" ]; then
   EXCLUDE_OPTION="--exclude \"$EXCLUDE\""
+fi
+
+HTTPPROXY_OPTION=
+if [ -n "$HTTPPROXY" ]; then
+  HTTPPROXY_OPTION="--httpproxy '$HTTPPROXY'"
+fi
+
+TRUST_OPTION=
+if [ -n "$TRUST" -a "$TRUST" != 'false' ]; then
+  TRUST_OPTION="--trust"
 fi
 
 # Run command
@@ -529,7 +581,11 @@ if [ -n "$USERNAME" ]; then
   if eval "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
           $UNSYNCEDFOLDERS_OPTION \
 	  $DAVPATH_OPTION \
+	  $UPLIMIT_OPTION \
+	  $DOWNLIMIT_OPTION \
 	  $EXCLUDE_OPTION \
+	  $HTTPPROXY_OPTION \
+	  $TRUST_OPTION \
 	  "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
     NCC_SUCCEEDED=yes
   fi
@@ -538,7 +594,11 @@ else
   if eval "$NEXTCLOUDCMD" -n \
 	  $UNSYNCEDFOLDERS_OPTION \
 	  $DAVPATH_OPTION \
+	  $UPLIMIT_OPTION \
+	  $DOWNLIMIT_OPTION \
 	  $EXCLUDE_OPTION \
+	  $HTTPPROXY_OPTION \
+	  $TRUST_OPTION \
 	  "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
     NCC_SUCCEEDED=yes
   fi

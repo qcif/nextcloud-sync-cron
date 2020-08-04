@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0
+
+- Added support for "httpproxy", "trust", "uplimit" and "downlimit".
+
 ## 1.3.0
 
 - Added support for "davpath" and "exclude" in the config file.

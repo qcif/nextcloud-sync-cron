@@ -1,5 +1,7 @@
 # nextcloud-sync-cron
 
+**Version 1.4.0**
+
 Script to run the Linux/Unix Nextcloud command line client in a cron job.
 
 # Synopsis
@@ -9,7 +11,7 @@ Script to run the Linux/Unix Nextcloud command line client in a cron job.
 # Description
 
 For running the [Nextcloud command line
-client](https://docs.nextcloud.com/desktop/2.5/advancedusage.html#nextcloud-command-line-client)
+client](https://docs.nextcloud.com/desktop/2.6/advancedusage.html#nextcloud-command-line-client)
 program, `nextcloudcmd`, in a _cron_ job.
 
 The standard Nextcloud command line client performs one sync run and
@@ -54,11 +56,18 @@ Mandatory entries:
 
 Optional entries:
 
-- `unsyncedfolders` the name of a file containing list of un-synced remote folders
-- `davpath` value to override the WebDAV Path
-- `exclude` the name of a file containing an exclude list
-- `username` 
-- `password`
+- `httpproxy` - HTTP proxy to use
+- `trust` - use "false", or to trust the certificate use "true"
+- `exclude` - name of a file containing an exclude list
+- `unsyncedfolders` - name of a file containing list of un-synced remote folders
+- `username` - the login name (the "--user" option for _nextcloudcmd_)
+- `password` - password corresponding to the username
+- `davpath` - value to override the WebDAV Path
+- `uplimit` - limit the upload speed of files (in KB/s)
+- `downlimit` - limit the download speed of files (in KB/s)
+
+Note: _uplimit_ and _downlimit_ requires _nextcloudcmd_
+2.6 or newer.
 
 ### Authentication configuration
 
@@ -109,6 +118,22 @@ password: p@ssw0rd
 
 ### Optional configuration
 
+#### Trust
+
+Set the value to "true" to invoke _nextcloudcmd_ with the `--trust`
+option.
+
+Set the value to "false", or omit the configuration item, to not use
+the `--trust` option.
+
+```
+# Config file for Nextcloud sync cron
+
+local: /home/fbar/mydata
+remote: https://nextcloud.example.com
+trust: true
+```
+
 #### Unsynced folders
 
 Optionally the configuration file can also contain:
@@ -125,13 +150,10 @@ remote: https://nextcloud.example.com
 unsyncedfolders: /home/fbar/nosync.lst
 ```
 
-#### WebDAV Path
+#### Other optional configuration items
 
-- `davpath` value to override the WebDAV Path
-
-#### Exclude list
-
-- `exclude` the name of a file containing an exclude list
+Similar to `unsyncedfolders` The values are passed to the
+corresponding command line option when invoking _nextcloudcmd_.
 
 ## Logging and errors
 
