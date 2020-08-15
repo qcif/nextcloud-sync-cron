@@ -22,7 +22,7 @@
 # Constants: these should not be changed
 
 NAME="Nextcloud sync cron"
-VERSION=1.4.0
+VERSION=1.4.1
 
 #----------------------------------------------------------------
 
@@ -540,7 +540,7 @@ EOF
 
 UNSYNCEDFOLDERS_OPTION=
 if [ -n "$UNSYNCEDFOLDERS" ]; then
-  UNSYNCEDFOLDERS_OPTION="--unsyncfolders \"$UNSYNCEDFOLDERS\""
+  UNSYNCEDFOLDERS_OPTION="--unsyncedfolders \"$UNSYNCEDFOLDERS\""
 fi
 
 DAVPATH_OPTION=
