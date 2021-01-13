@@ -4,6 +4,8 @@
 
 Script to run the Linux/Unix Nextcloud command line client in a cron job.
 
+It can also be used with _systemd_ timers, as well as cron jobs.
+
 # Synopsis
 
     nextcloud-sync-cron.sh [--logdir dir] [--verbose] [--help] [--version] configfile
@@ -289,6 +291,13 @@ the values are correct (i.e. the problem was fixed elsewhere), update
 the timestamp of the configuration file or delete the _failures.txt_
 file.
 
+# Installation
+
+Download the _nextcloud-sync-cron.sh_ file from its [GitHub
+repository](https://github.com/qcif/nextcloud-sync-cron), make it
+executable and put it somewhere where the _cron_ job can find it.
+
+For Arch Linux users, this is also available as a AUR package.
 
 # Known limitations
 
