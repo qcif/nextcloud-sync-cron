@@ -297,7 +297,8 @@ Download the _nextcloud-sync-cron.sh_ file from its [GitHub
 repository](https://github.com/qcif/nextcloud-sync-cron), make it
 executable and put it somewhere where the _cron_ job can find it.
 
-For Arch Linux users, this is also available as a AUR package.
+For Arch Linux users, this is also available as the `nextcloud-sync-cron-git`
+AUR package.
 
 # Known limitations
 
