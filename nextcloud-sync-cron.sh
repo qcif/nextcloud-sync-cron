@@ -218,6 +218,7 @@ DOWNLIMIT=`getconfig --optional downlimit "$CONF_FILE"`
 EXCLUDE=`getconfig --optional exclude "$CONF_FILE"`
 HTTPPROXY=`getconfig --optional httpproxy "$CONF_FILE"`
 TRUST=`getconfig --optional trust "$CONF_FILE"`
+USEDELAY=`getconfig --optional usedelay "$CONF_FILE"`
 
 # Mandatory config options
 
@@ -368,12 +369,22 @@ if [ -e "$BAD_FILE" ]; then
 
     # Determine delay before retrying
     # Current algorithm: 1, 2, 4 minute ... 4, 8, 16, 24, 24, 24 hours ...
+     
+    if [ -n "$USEDELAY" -a "$USEDELAY" != 'true' ]; then
+        USEDELAY="false"
+    else
+        USEDELAY="true"
+    fi
+    
+    if [ "$USEDELAY" == 'true' ]; then
+        MAX_DELAY=$((60 * 60 * 24))  # 1 day
 
-    MAX_DELAY=$((60 * 60 * 24))  # 1 day
-
-    DELAY=$(( 2 ** (($NUM_FAILURES - 1)) * 60 ))
-    if [ $DELAY -gt $MAX_DELAY ]; then
-	DELAY=$MAX_DELAY
+        DELAY=$(( 2 ** (($NUM_FAILURES - 1)) * 60 ))
+        if [ $DELAY -gt $MAX_DELAY ]; then
+            DELAY=$MAX_DELAY
+        fi
+    else
+        DELAY=1  # 1 second
     fi
 
     # Abort if reason was configuration error and it has not been fixed

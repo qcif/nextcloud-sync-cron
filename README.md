@@ -67,6 +67,7 @@ Optional entries:
 - `davpath` - value to override the WebDAV Path
 - `uplimit` - limit the upload speed of files (in KB/s)
 - `downlimit` - limit the download speed of files (in KB/s)
+- `usedelay` - "true" by default; use "false" to disable delay after failed runs.
 
 Note: _uplimit_ and _downlimit_ requires _nextcloudcmd_
 2.6 or newer.
@@ -239,6 +240,8 @@ delay is reached. This delay increases with subsequent failures.
 The delay starts at 1 minute, and doubles with subsequent failures,
 with the maximum delay of 24 hours. That is the delays are: 1 minute
 on the first failure, then 2, 4, 8 minutes etc.
+
+If `usedelay` is set to `false` in the config, the delay is held at 1 second in all cases, effectively disabling it.
 
 
 # Exit status
