@@ -15,18 +15,18 @@
 # See the README file at <https://github.com/qcif/nextcloud-sync-cron>
 # for more details.
 #
-# Copyright 2017, 2019, 2020, QCIF Pty Ltd.
+# Copyright 2017, 2019, 2020, 2021,QCIF Pty Ltd.
 #----------------------------------------------------------------
 
 #----------------------------------------------------------------
 # Constants: these should not be changed
 
 NAME="Nextcloud sync cron"
-VERSION=1.4.1
+VERSION=1.5.0
 
 #----------------------------------------------------------------
 
-PROG=`basename "$0"`
+PROG=$(basename "$0")
 PROGDIR=$(cd "$(dirname "$0")" && pwd)
 
 #----------------------------------------------------------------
@@ -155,40 +155,40 @@ fi
 function getconfig () {
     # Usage: getconfig [--optional] param_name config_file
     if [ $# -eq 3 -a "$1" = '--optional' ]; then
-	OPTIONAL=yes
-	PARAM="$2"
-	FILE="$3"
+        OPTIONAL=yes
+        PARAM="$2"
+        FILE="$3"
     elif [ $# -eq 2 ]; then
-	OPTIONAL=
-	PARAM="$1"
-	FILE="$2"
+        OPTIONAL=
+        PARAM="$1"
+        FILE="$2"
     else
-	echo "$PROG: internal error: invoking getconfig" >&2
-	exit $STATUS_CONFIG_ERROR
+        echo "$PROG: internal error: invoking getconfig" >&2
+        exit $STATUS_CONFIG_ERROR
     fi
     VALUE=
     FOUND=
     IFS=": "
     while read -r K V; do
-	if [ "$K" = "$PARAM" ]; then
-	    if [ -n "$FOUND" ]; then
-		echo "$PROG: config: multiple value for \"$PARAM\": $FILE" >&2
-		exit $STATUS_CONFIG_ERROR
-	    fi
-	    VALUE="$V"
-	    FOUND=yes
-	fi
+        if [ "$K" = "$PARAM" ]; then
+            if [ -n "$FOUND" ]; then
+                echo "$PROG: config: multiple value for \"$PARAM\": $FILE" >&2
+                exit $STATUS_CONFIG_ERROR
+            fi
+            VALUE="$V"
+            FOUND=yes
+        fi
     done < "$FILE"
     if [ -z "$OPTIONAL" ]; then
-	# Parameter was mandatory
-	if [ -z "$FOUND" ]; then
-	    echo "$PROG: config: missing value for \"$PARAM\": $FILE" >&2
-	    exit $STATUS_CONFIG_ERROR
-	fi
-	if [ -z "$VALUE" ]; then
-	    echo "$PROG: config: \"$PARAM\" cannot be blank: $FILE" >&2
-	    exit $STATUS_CONFIG_ERROR
-	fi
+        # Parameter was mandatory
+        if [ -z "$FOUND" ]; then
+            echo "$PROG: config: missing value for \"$PARAM\": $FILE" >&2
+            exit $STATUS_CONFIG_ERROR
+        fi
+        if [ -z "$VALUE" ]; then
+            echo "$PROG: config: \"$PARAM\" cannot be blank: $FILE" >&2
+            exit $STATUS_CONFIG_ERROR
+        fi
     fi
     echo "$VALUE"
 }
@@ -264,8 +264,8 @@ fi
 
 if [ ! -d "$LOG_DIR" ]; then
     if ! mkdir "$LOG_DIR" 2>&1; then
-	echo "$PROG: error: cannot create log directory: $LOG_DIR" >&2
-	exit $STATUS_ERROR
+        echo "$PROG: error: cannot create log directory: $LOG_DIR" >&2
+        exit $STATUS_ERROR
     fi
 fi
 if [ ! -w "$LOG_DIR" ]; then
@@ -283,8 +283,8 @@ fi
 if [ ! -f "$LOG_FILE" ]; then
     # Log does not exist: create it
     if ! touch "$LOG_FILE"; then
-	echo "$PROG: error: could not create log file: $LOG_FILE" >&2
-	exit $STATUS_ERROR
+        echo "$PROG: error: could not create log file: $LOG_FILE" >&2
+        exit $STATUS_ERROR
     fi
 fi 
 
@@ -303,10 +303,10 @@ elif [ -z "$USERNAME" -a -n "$PASSWORD" ]; then
     ERROR="config file has password without username"
 elif [ -z "$USERNAME" -a -z "$PASSWORD" ]; then
     if [ ! -r "$HOME/.netrc" ]; then
-	ERROR="cannot read file: $HOME/.netrc"
+        ERROR="cannot read file: $HOME/.netrc"
     fi
     if [ ! -e "$HOME/.netrc" ]; then
-	ERROR="file missing: $HOME/.netrc"
+        ERROR="file missing: $HOME/.netrc"
     fi
 fi
 
@@ -326,7 +326,7 @@ if [ -n "$ERROR" ]; then
     TS=`date '+%F %T'`
     echo "$TS: fail: $ERROR" >> "$LOG_FILE"
     if [ -n "$VERBOSE" ]; then
-	echo "$PROG: error: $ERROR" >&2
+        echo "$PROG: error: $ERROR" >&2
     fi
     exit $STATUS_CONFIG_ERROR
 fi
@@ -348,23 +348,23 @@ if [ -e "$BAD_FILE" ]; then
     PREV_REASON=`getconfig $PARAM_NAME_REASON "$BAD_FILE"`
 
     if ! echo "$NUM_FAILURES" | grep -E '^[0-9]+$' >/dev/null; then
-	if [ -n "$VERBOSE" ]; then
-	    echo "$PROG: error: corrupt file: $BAD_FILE" >&2
-	fi
-	exit $STATUS_ERROR
+        if [ -n "$VERBOSE" ]; then
+            echo "$PROG: error: corrupt file: $BAD_FILE" >&2
+        fi
+        exit $STATUS_ERROR
     fi
     if [ $NUM_FAILURES -le 0 ]; then
-	if [ -n "$VERBOSE" ]; then
-	    echo "$PROG: error: corrupt file: $BAD_FILE" >&2
-	fi
-	exit $STATUS_ERROR
+        if [ -n "$VERBOSE" ]; then
+            echo "$PROG: error: corrupt file: $BAD_FILE" >&2
+        fi
+        exit $STATUS_ERROR
     fi
 
     if ! echo "$PREV_FAIL_SECS" | grep -E '^[0-9]+$' >/dev/null; then
-	if [ -n "$VERBOSE" ]; then
-	    echo "$PROG: error: corrupt file: $BAD_FILE" >&2
-	fi
-	exit $STATUS_ERROR
+        if [ -n "$VERBOSE" ]; then
+            echo "$PROG: error: corrupt file: $BAD_FILE" >&2
+        fi
+        exit $STATUS_ERROR
     fi
 
     # Determine delay before retrying
@@ -390,45 +390,45 @@ if [ -e "$BAD_FILE" ]; then
     # Abort if reason was configuration error and it has not been fixed
 
     if echo "$PREV_REASON" | grep "^$REASON_CONFIG" >/dev/null; then
-	# Configuration error
+        # Configuration error
 
-	if [ "$CONF_FILE" -nt "$BAD_FILE" ]; then
-	    # Config file has been modified since last run
-	    :
-	elif [ \( -z "$USERNAME" \) -a \
-	       \( "$HOME/.netrc" -nt "$BAD_FILE" \) ];then
-	    # Using ~/.netrc and it has been modified since last run
-	    :
-	else
-	    # Problem probably has not been fixed
-	    if [ -n "$USERNAME" ]; then
-		ERROR="fix \"$CONF_FILE\" or delete \"$BAD_FILE\""
-	    else
-		ERROR="fix \"$CONF_FILE\" and/or \"$HOME/.netrc\", or delete \"$BAD_FILE\""
-	    fi
-	    TS=`date '+%F %T'`
-	    echo "$TS: fail: $ERROR" >> "$LOG_FILE"
+        if [ "$CONF_FILE" -nt "$BAD_FILE" ]; then
+            # Config file has been modified since last run
+            :
+        elif [ \( -z "$USERNAME" \) -a \
+               \( "$HOME/.netrc" -nt "$BAD_FILE" \) ];then
+            # Using ~/.netrc and it has been modified since last run
+            :
+        else
+            # Problem probably has not been fixed
+            if [ -n "$USERNAME" ]; then
+                ERROR="fix \"$CONF_FILE\" or delete \"$BAD_FILE\""
+            else
+                ERROR="fix \"$CONF_FILE\" and/or \"$HOME/.netrc\", or delete \"$BAD_FILE\""
+            fi
+            TS=`date '+%F %T'`
+            echo "$TS: fail: $ERROR" >> "$LOG_FILE"
 
-	    if [ -n "$VERBOSE" ]; then
-		echo "$PROG: $PREV_REASON" >&2
-		echo "$PROG: $ERROR before running again" >&2
-	    fi
-	    exit $STATUS_CONFIG_FILE_NOT_FIXED
-	fi
-	
-	# Note: normal delay does not apply.
+            if [ -n "$VERBOSE" ]; then
+                echo "$PROG: $PREV_REASON" >&2
+                echo "$PROG: $ERROR before running again" >&2
+            fi
+            exit $STATUS_CONFIG_FILE_NOT_FIXED
+        fi
+        
+        # Note: normal delay does not apply.
     else
-	# Not a config file error: retry or wait?
+        # Not a config file error: retry or wait?
 
-	NOW_SECS=`date +%s`
-	ELAPSED=$(($NOW_SECS - $PREV_FAIL_SECS))
+        NOW_SECS=`date +%s`
+        ELAPSED=$(($NOW_SECS - $PREV_FAIL_SECS))
 
-	if [ $ELAPSED -lt $DELAY ]; then
-	    if [ -n "$VERBOSE" ]; then
-		echo "$PROG: skipping (can sync in $(($DELAY-$ELAPSED))s)" >&2
-	    fi
-	    exit $STATUS_SKIPPING
-	fi
+        if [ $ELAPSED -lt $DELAY ]; then
+            if [ -n "$VERBOSE" ]; then
+                echo "$PROG: skipping (can sync in $(($DELAY-$ELAPSED))s)" >&2
+            fi
+            exit $STATUS_SKIPPING
+        fi
     fi
 
 else
@@ -444,22 +444,22 @@ fi
 if [ -f "$PID_FILE" ]; then
     OLD_PID=`cat "$PID_FILE"`
     if echo "$OLD_PID" | grep -E '^[0-9]+$' >/dev/null; then
-	# PID file contained a number
-	if ps -p "$OLD_PID" >/dev/null; then
-	    # Process still running
-	    if [ -n "$VERBOSE" ]; then
-		echo "$PROG: another process is already running" >&2
-	    fi
-	    exit $STATUS_ALREADY_RUNNING
-	else
-	    # Process not running: stale PID file
-	    rm "$PID_FILE"
-	fi
+        # PID file contained a number
+        if ps -p "$OLD_PID" >/dev/null; then
+            # Process still running
+            if [ -n "$VERBOSE" ]; then
+                echo "$PROG: another process is already running" >&2
+            fi
+            exit $STATUS_ALREADY_RUNNING
+        else
+            # Process not running: stale PID file
+            rm "$PID_FILE"
+        fi
     else
-	# PID file contained unexpected data
-	TS=`date '+%F %T'`
-	echo "$TS: fail: bad PID file: $PID_FILE" >> "$LOG_FILE"
-	exit $STATUS_ERROR
+        # PID file contained unexpected data
+        TS=`date '+%F %T'`
+        echo "$TS: fail: bad PID file: $PID_FILE" >> "$LOG_FILE"
+        exit $STATUS_ERROR
     fi
 fi
 
@@ -472,7 +472,7 @@ SAVED_PID=`cat "$PID_FILE"`
 if [ "$SAVED_PID" != "$PID" ]; then
     # Race condition: someone else created the PID file before us?
     if [ -n "$VERBOSE" ]; then
-	echo "$PROG: another process is already running" >&2
+        echo "$PROG: another process is already running" >&2
     fi
     exit $STATUS_ALREADY_RUNNING
 fi
@@ -591,26 +591,26 @@ if [ -n "$USERNAME" ]; then
   # Credentials on command line
   if eval "$NEXTCLOUDCMD" --user "$USERNAME" --password "$PASSWORD" \
           $UNSYNCEDFOLDERS_OPTION \
-	  $DAVPATH_OPTION \
-	  $UPLIMIT_OPTION \
-	  $DOWNLIMIT_OPTION \
-	  $EXCLUDE_OPTION \
-	  $HTTPPROXY_OPTION \
-	  $TRUST_OPTION \
-	  "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
+          $DAVPATH_OPTION \
+          $UPLIMIT_OPTION \
+          $DOWNLIMIT_OPTION \
+          $EXCLUDE_OPTION \
+          $HTTPPROXY_OPTION \
+          $TRUST_OPTION \
+          "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
     NCC_SUCCEEDED=yes
   fi
 else
   # Credentials from ~/.netrc (the "-n" means to use netrc for login)
   if eval "$NEXTCLOUDCMD" -n \
-	  $UNSYNCEDFOLDERS_OPTION \
-	  $DAVPATH_OPTION \
-	  $UPLIMIT_OPTION \
-	  $DOWNLIMIT_OPTION \
-	  $EXCLUDE_OPTION \
-	  $HTTPPROXY_OPTION \
-	  $TRUST_OPTION \
-	  "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
+          $UNSYNCEDFOLDERS_OPTION \
+          $DAVPATH_OPTION \
+          $UPLIMIT_OPTION \
+          $DOWNLIMIT_OPTION \
+          $EXCLUDE_OPTION \
+          $HTTPPROXY_OPTION \
+          $TRUST_OPTION \
+          "$LOCAL_DIR" "$REMOTE_URI" </dev/null >>"$OUT_FILE" 2>&1; then
     NCC_SUCCEEDED=yes
   fi
 fi
@@ -633,7 +633,7 @@ if [ -n "$NCC_SUCCEEDED" ]; then
 
     # Reset failures
     if [ $NUM_FAILURES -gt 0 ]; then
-	rm "$BAD_FILE"
+        rm "$BAD_FILE"
     fi
 
     # Log
@@ -648,13 +648,13 @@ else
 
     REASON=
     if grep 'Network error:  "ocs/v1.php/cloud/capabilities" "Host .* not found" QVariant(Invalid)' "$OUT_FILE" >/dev/null; then
-	REASON="$REASON_CONFIG: bad host in \"remote\" URL"
+        REASON="$REASON_CONFIG: bad host in \"remote\" URL"
     elif grep 'Network error:  "ocs/v1.php/cloud/capabilities" "Error transferring .* - server replied: Not Found" QVariant(int, 404)' "$OUT_FILE" >/dev/null; then
-	REASON="$REASON_CONFIG: bad path in \"remote\" URL"
+        REASON="$REASON_CONFIG: bad path in \"remote\" URL"
     elif grep 'Network error:  "ocs/v1.php/cloud/capabilities" "Host requires authentication" QVariant(int, 401)' "$OUT_FILE" >/dev/null; then
-	REASON="$REASON_CONFIG: incorrect username/password"
+        REASON="$REASON_CONFIG: incorrect username/password"
     else
-	REASON="see nextcloudcmd output: $OUT_FILE"
+        REASON="see nextcloudcmd output: $OUT_FILE"
     fi
 
     # Record failures
@@ -677,7 +677,7 @@ EOF
     echo "$TS: fail" >> "$LOG_FILE"
 
     if [ -n "$VERBOSE" ]; then
-	echo "$PROG: error: $REASON" >&2
+        echo "$PROG: error: $REASON" >&2
     fi
     EXIT_STATUS=$STATUS_ERROR
 fi

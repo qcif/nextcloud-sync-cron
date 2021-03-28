@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0
+
+- Added "usedelay" option to disable delay when previous run failed.
+
 ## 1.4.1
 
 - Fixed misspelling of --unsyncedfolders option.

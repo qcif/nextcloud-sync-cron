@@ -1,6 +1,6 @@
 # nextcloud-sync-cron
 
-**Version 1.4.0**
+**Version 1.5.0**
 
 Script to run the Linux/Unix Nextcloud command line client in a cron job.
 
@@ -32,7 +32,7 @@ Features are:
 - Blocking and/or delaying retries when errors are encountered. This
   prevents excessive retries before problems are fixed. For example,
   retrying with the wrong password can blacklist the user account and
-  make the problem harder to fix.
+  make the problem harder to fix. This feature can be disbled.
 
 - Account details are stored in a separate configuration file instead
   of embedded inside the crontab.
@@ -180,7 +180,8 @@ The log directory contains these files:
 
 - `failures.txt` contains information about previous failures, if the
   most recent run was not successful. The information in it determines
-  the delay before the client is allowed to run again.  If the most
+  the delay before the client is allowed to run again (unless the _usedelay_
+  entry has been set to _false_).  If the most
   recent run was successful this file is deleted, because it breaks
   the previous sequence of failures.
 
@@ -241,8 +242,11 @@ The delay starts at 1 minute, and doubles with subsequent failures,
 with the maximum delay of 24 hours. That is the delays are: 1 minute
 on the first failure, then 2, 4, 8 minutes etc.
 
-If `usedelay` is set to `false` in the config, the delay is held at 1 second in all cases, effectively disabling it.
-
+If `usedelay` is set to `false` in the config, the delay is held at 1
+second in all cases, effectively disabling it. That is, it will run
+the sync everytime the script is run (i.e. when the _cron_ job runs or
+if _nextcloud-sync-cron_ was manually run) regardless of whether the
+previous run succeeded or failed.
 
 # Exit status
 
