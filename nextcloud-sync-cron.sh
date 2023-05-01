@@ -286,7 +286,7 @@ if [ ! -f "$LOG_FILE" ]; then
         echo "$PROG: error: could not create log file: $LOG_FILE" >&2
         exit $STATUS_ERROR
     fi
-fi 
+fi
 
 # NOTE: After this point this script does not produce any output to
 # stdout or stderr, unless in verbose mode. This is so cron won't
@@ -369,13 +369,13 @@ if [ -e "$BAD_FILE" ]; then
 
     # Determine delay before retrying
     # Current algorithm: 1, 2, 4 minute ... 4, 8, 16, 24, 24, 24 hours ...
-     
+
     if [ -n "$USEDELAY" -a "$USEDELAY" != 'true' ]; then
         USEDELAY="false"
     else
         USEDELAY="true"
     fi
-    
+
     if [ "$USEDELAY" == 'true' ]; then
         MAX_DELAY=$((60 * 60 * 24))  # 1 day
 
@@ -415,7 +415,7 @@ if [ -e "$BAD_FILE" ]; then
             fi
             exit $STATUS_CONFIG_FILE_NOT_FIXED
         fi
-        
+
         # Note: normal delay does not apply.
     else
         # Not a config file error: retry or wait?
@@ -556,7 +556,7 @@ fi
 
 DAVPATH_OPTION=
 if [ -n "$DAVPATH" ]; then
-  DAVPATH_OPTION="--davpath \"$DAVPATH\""
+  DAVPATH_OPTION="--path \"$DAVPATH\""
 fi
 
 UPLIMIT_OPTION=
